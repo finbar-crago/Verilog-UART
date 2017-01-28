@@ -63,9 +63,9 @@ module uart_rx
    wire      baud_clk1 = (clk_count == ((CLKFREQ/BAUD)-1)/2);
 
    reg [3:0] i = 4'hf;
-   assign ready = (i == 8 && rx);
-   wire   frame =  (ready) ? 0 : (i > 7 && rx) ? 0 : 1;
-   wire   reset  = (!rx && !frame);
+   assign ready = ((i == 4'd8) && rx);
+   wire      frame = (i <= 8 || i == 4'hf);
+   wire      reset = (!rx && !frame);
 
    always @(posedge reset or posedge baud_clk1)
      begin
@@ -73,9 +73,11 @@ module uart_rx
 	   i <= 4'hf;
 	   data <= 8'd0;
 	end else begin
-	   if (i < 8)
-	     data[i] <= rx;
-	   i <= i + 1;
+	   if(frame) begin
+	      if (i < 8)
+		data[i] <= rx;
+	      i <= i + 1;
+	   end
 	end
      end
 
