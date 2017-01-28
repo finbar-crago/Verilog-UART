@@ -58,12 +58,10 @@ module uart_rx
 
    reg [6:0] clk_count = 7'b0;
    always @(posedge clk)
-     begin
-	if (frame)
-	  clk_count <= (baud_clk0)? 0 : clk_count + 1;
-	else
-	  clk_count <= 0;
-     end
+     if (frame)
+       clk_count <= (baud_clk0) ? 0 : clk_count + 1;
+     else
+       clk_count <= 0;
 
    wire      baud_clk0 = (clk_count == (CLKFREQ/BAUD)-1);
    wire      baud_clk1 = (clk_count == ((CLKFREQ/BAUD)-1)/2);
@@ -71,25 +69,25 @@ module uart_rx
    reg 	     frame = 0;
    reg [3:0] i = 4'hf;
 
-   always @(negedge rx)
+   always @(negedge rx or posedge clk)
      begin
-	if (!frame) begin
+	if (!rx && !frame) begin
 	   data <= 8'b0;
-	   i <= 4'hf;
 	   frame <= 1;
 	end
+	else if (i > 7 && rx == 1)
+	  frame <= 0;
+
      end
 
-   always @(posedge baud_clk1)
+   always @(posedge baud_clk1 or posedge frame)
      begin
-	if (frame) begin
-	   if (i > 7 && rx == 1)
-	     frame <= 0;
-	   else begin
+	if (baud_clk1) begin
+	   if (i < 8)
 	     data[i] <= rx;
-	      i <= i+4'b1;
-	   end
+	   i <= i+4'b1;
 	end
+	else i <= 4'hf;
      end
 
    assign ready = (i == 8 && rx);
