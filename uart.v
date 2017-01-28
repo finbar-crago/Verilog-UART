@@ -46,11 +46,9 @@ endmodule
 module uart_rx
   #(parameter CLKFREQ=12000000, BAUD=115200)
    (
-    input wire 	     clk,
-
-    input wire 	     rx,
-
-    output wire      ready,
+    input 	     clk,
+    input 	     rx,
+    output 	     ready,
     output reg [7:0] data
     );
 
@@ -58,38 +56,27 @@ module uart_rx
 
    reg [6:0] clk_count = 7'b0;
    always @(posedge clk)
-     if (frame)
-       clk_count <= (baud_clk0) ? 0 : clk_count + 1;
-     else
-       clk_count <= 0;
+     if (frame)  clk_count <= (baud_clk0) ? 0 : clk_count + 1;
+     else        clk_count <= 0;
 
    wire      baud_clk0 = (clk_count == (CLKFREQ/BAUD)-1);
    wire      baud_clk1 = (clk_count == ((CLKFREQ/BAUD)-1)/2);
 
-   reg 	     frame = 0;
    reg [3:0] i = 4'hf;
+   assign ready = (i == 8 && rx);
+   wire   frame =  (ready) ? 0 : (i > 7 && rx) ? 0 : 1;
+   wire   reset  = (!rx && !frame);
 
-   always @(negedge rx or posedge clk)
+   always @(posedge reset or posedge baud_clk1)
      begin
-	if (!rx && !frame) begin
-	   data <= 8'b0;
-	   frame <= 1;
-	end
-	else if (i > 7 && rx == 1)
-	  frame <= 0;
-
-     end
-
-   always @(posedge baud_clk1 or posedge frame)
-     begin
-	if (baud_clk1) begin
+	if (reset) begin
+	   i <= 4'hf;
+	   data <= 8'd0;
+	end else begin
 	   if (i < 8)
 	     data[i] <= rx;
-	   i <= i+4'b1;
+	   i <= i + 1;
 	end
-	else i <= 4'hf;
      end
-
-   assign ready = (i == 8 && rx);
 
 endmodule
