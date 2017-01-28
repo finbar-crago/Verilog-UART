@@ -14,7 +14,7 @@ module top(input  CLK,  output TXD,  input  RXD,
    reg [6:0]  char = 7'h20;
    wire	      tx_busy;
 
-   uart uart0(.clk(CLK), .send(send), .data({1'b0, char}), .busy(tx_busy), .tx(TXD));
+   uart_tx uart_tx0(.clk(CLK), .send(send), .data({1'b0, char}), .busy(tx_busy), .tx(TXD));
  
    always @(posedge CLK) begin
       if (tx_busy) send <= 0;

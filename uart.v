@@ -1,6 +1,6 @@
 `timescale 1ns / 1ps
 
-module uart
+module uart_tx
   #(parameter CLKFREQ=12000000, BAUD=115200)
    (
     input wire 	     clk,

@@ -1,6 +1,6 @@
 `timescale 1 s / 1 ns
 
-module test;
+module uart__tb;
    reg clk = 0;
    reg send = 0;
    reg [7:0] char = 8'h40;
@@ -16,5 +16,5 @@ module test;
    end
 
    always #(1/(1.2e+8)/2) clk = ~clk;
-   uart uart0(.clk(clk), .send(send), .data(char), .busy(busy), .tx(tx));
+   uart_tx uart_tx0(.clk(clk), .send(send), .data(char), .busy(busy), .tx(tx));
 endmodule   
