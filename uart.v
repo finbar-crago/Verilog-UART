@@ -41,3 +41,57 @@ module uart_tx
 
      end
 endmodule
+
+
+module uart_rx
+  #(parameter CLKFREQ=12000000, BAUD=115200)
+   (
+    input wire 	     clk,
+
+    input wire 	     rx,
+
+    output wire      ready,
+    output reg [7:0] data
+    );
+
+   initial data <= 8'b0;
+
+   reg [6:0] clk_count = 7'b0;
+   always @(posedge clk)
+     begin
+	if (frame)
+	  clk_count <= (baud_clk0)? 0 : clk_count + 1;
+	else
+	  clk_count <= 0;
+     end
+
+   wire      baud_clk0 = (clk_count == (CLKFREQ/BAUD)-1);
+   wire      baud_clk1 = (clk_count == ((CLKFREQ/BAUD)-1)/2);
+
+   reg 	     frame = 0;
+   reg [3:0] i = 4'hf;
+
+   always @(negedge rx)
+     begin
+	if (!frame) begin
+	   data <= 8'b0;
+	   i <= 4'hf;
+	   frame <= 1;
+	end
+     end
+
+   always @(posedge baud_clk1)
+     begin
+	if (frame) begin
+	   if (i > 7 && rx == 1)
+	     frame <= 0;
+	   else begin
+	     data[i] <= rx;
+	      i <= i+4'b1;
+	   end
+	end
+     end
+
+   assign ready = (i == 8 && rx);
+
+endmodule
